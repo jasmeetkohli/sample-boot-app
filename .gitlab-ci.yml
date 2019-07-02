@@ -1,0 +1,176 @@
+variables:
+  MAVEN_IMAGE: "maven:3.5.0-jdk-8"
+  LATEST_VERSION: latest_version
+  RELEASE_VERSION: release_version
+  RELEASE_SHA: release_sha
+  EPHEMERAL_NS: "ci-${CI_PIPELINE_ID}"
+  CI_CONSUL: "ci-${CI_PIPELINE_ID}-consul-consul.ci-${CI_PIPELINE_ID}"
+
+stages:
+  - snapshot-build
+  - snapshot-package
+  - standup-test-env
+  - functional-test
+  - teardown-test-env
+  - snapshot-liquibase-deploy
+  - snapshot-deploy
+  - snapshot-apidocs
+  - dev-automation-test
+  - release-build
+  - release-package
+  - staging-liquibase-deploy
+  - release-deploy
+  - staging-release-apidocs
+  - staging-automation-test
+  - prod-liquibase-deploy
+  - prod-release-deploy
+  - prod-release-apidocs
+
+.disable: &disable
+  only:
+    - never-execute
+
+.common: &common
+  except:
+    - tags
+
+.master-only: &master-only
+  <<: [*common]
+
+maven-snapshot-build:
+  <<: [*common]
+  image: "${MAVEN_IMAGE}"
+  stage: snapshot-build
+  script:
+    - export MAVEN_OPTS="${MAVEN_OPTS} -Dmaven.repo.local=/cache/commerce_m2"
+    - echo "${CI_COMMIT_SHA}" > "${LATEST_VERSION}"
+    - cat $LATEST_VERSION
+    - mvn clean install
+    - "cat target/cov/index.html || :"
+  coverage: /Total.*?([0-9]{1,3})%/
+  artifacts:
+    paths:
+    - target/*.jar
+    - "${LATEST_VERSION}"
+    expire_in: 1 week
+  #tags:
+  #  - cache
+
+.docker-params: &docker-params
+  <<: [*common]
+  image: docker:git
+  services:
+    - docker:dind
+  before_script:
+    - echo "$CI_RUNNER_TAGS" | grep -q k8s && export DOCKER_HOST="tcp://localhost:2375"
+    #- docker login -u gitlab-ci-token -p "${CI_BUILD_TOKEN}" "${CI_REGISTRY}"
+
+package-snapshot-docker-image:
+  <<: [*docker-params]
+  stage: snapshot-package
+  dependencies:
+    - maven-snapshot-build
+  script:
+    - SNAPSHOT_VERSION=$(cat $LATEST_VERSION)
+    - echo "SNAPSHOT_VERSION=$SNAPSHOT_VERSION"
+    - export PC_TOMCAT_IMAGE="${CI_REGISTRY}/jasmeetkohlisingh/sample-boot-app:master"
+    #- docker build -t "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}" -t "${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_SLUG}" -t "${CI_REGISTRY_IMAGE}:${SNAPSHOT_VERSION}" . --build-arg PC_TOMCAT_IMAGE=$PC_TOMCAT_IMAGE
+    #- docker push "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
+    #- docker push "${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_SLUG}"
+    #- docker push "${CI_REGISTRY_IMAGE}:${SNAPSHOT_VERSION}"
+  dependencies:
+    - maven-snapshot-build
+
+
+mvn-verify:
+  <<: [*common]
+  image: maven:3.5.0-jdk-8
+  stage: functional-test
+  script:
+    - mvn -B verify 
+
+
+# release stages
+maven-release-build:
+  <<: [*master-only]
+  image: "${MAVEN_IMAGE}"
+  stage: release-build
+  script:
+    # check if project is using a SNAPSHOT version of commerce-dependencies pom
+    #- mvn properties:write-project-properties
+    #- DEPENDENCIES_POM_VERSION=$(grep "dependencies.commerce.version" resolved.properties | cut -d"=" -f 2)
+    #- (if echo "$DEPENDENCIES_POM_VERSION" |grep "SNAPSHOT"; then echo "Cannot release with SNAPSHOT version of dependencies pom" && exit 1; fi)
+    # invoke maven-release-plugin to perform release - create git tag, bump up the artifact version, upload war to artifactory
+    #- git config --global user.name "GitLab Runner"
+    #- git config --global user.email "gitlab@gitlab.tuk2.intelius.com"
+    # Add ssh key to ssh config to connect to git repo as gitlab
+    #- eval $(ssh-agent -s)
+    #- ssh-add <(echo "$GITLAB_RSA")
+    #- mkdir p ~/.ssh && ssh-keyscan -t rsa gitlab.tuk2.intelius.com > ~/.ssh/known_hosts
+    #- cd $(mktemp -d)
+    # by default gitlab runner works on detatched head. This prevents commits back to the repo (that are part of release:prepare).
+    # therefore, clone and checkout the branch before starting release:prepare
+    - git clone ${CI_REPOSITORY_URL} ${CI_PROJECT_NAME} && cd ${CI_PROJECT_NAME}
+    - git checkout ${CI_COMMIT_REF_NAME}
+    # Now begin the actual maven release steps...
+    - if [ "$RELEASE_VERSION" != "release_version" ];then  
+        mvn -B -Dresume=false -DscmCommentPrefix='[skip ci] ' release:prepare -DreleaseVersion="$RELEASE_VERSION"
+      else
+        mvn -B -Dresume=false -DscmCommentPrefix='[skip ci] ' release:prepare
+      fi
+    # extract the maven release version and write it out to file (will be used to tag the release docker image)
+    - grep "^project.rel.*" release.properties | cut -d "=" -f 2 > "$CI_PROJECT_DIR/${RELEASE_VERSION}"
+    - mvn release:perform -Dmaven.site.skip=true
+    # extract the most recent commit sha and write it out to file (will be used to tag the release docker image)
+    - git rev-parse HEAD > "$CI_PROJECT_DIR/${RELEASE_SHA}"
+    # make the release war available as an artifact for dependendent downstream stages
+    #- rm -f $CI_PROJECT_DIR/target/*.war; cp target/checkout/target/*.war $CI_PROJECT_DIR/target
+  artifacts:
+    paths:
+    - target/*.jar
+    - "${RELEASE_VERSION}"
+    - "${RELEASE_SHA}"
+    expire_in: 1 week
+  when: manual
+  allow_failure: false
+  tags:
+    - cache
+
+package-release-docker-image:
+  <<: [*master-only, *docker-params]
+  stage: release-package
+  script:
+    - RELEASE_VERSION=$(cat $RELEASE_VERSION)
+    - RELEASE_SHA=$(cat $RELEASE_SHA)
+    - echo "RELEASE_VERSION=$RELEASE_VERSION"
+    - export PC_TOMCAT_IMAGE="${CI_REGISTRY}/jasmeetkohlisingh/sample-boot-app:master"
+    #- docker build -t "${CI_REGISTRY_IMAGE}:${RELEASE_SHA}" -t "${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_SLUG}" -t "${CI_REGISTRY_IMAGE}:${RELEASE_VERSION}" . --build-arg PC_TOMCAT_IMAGE=$PC_TOMCAT_IMAGE
+    #- docker push "${CI_REGISTRY_IMAGE}:${RELEASE_SHA}"
+    #- docker push "${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_SLUG}"
+    #- docker push "${CI_REGISTRY_IMAGE}:${RELEASE_VERSION}"
+  dependencies:
+    - maven-release-build
+
+staging_deploy:
+  <<: [*master-only]
+  services:
+    - docker:dind
+  #image: "${CI_REGISTRY}/ops/docker-images/deploy/aws-staging/staging:master"
+  stage: release-deploy
+  script:
+    - NAMESPACE=staging
+    - APP=$CI_PROJECT_NAME
+    - VERSION=$(cat $RELEASE_VERSION)
+    - echo $VERSION
+    - RELEASE_IMAGE="${CI_REGISTRY_IMAGE}:${VERSION}"
+    - echo "${CI_REGISTRY_IMAGE}:${VERSION}"
+    #- BRANCH=${CI_COMMIT_REF_NAME}
+    #- aws_sync.sh "$RELEASE_IMAGE"
+    #- deploy_app.sh -t "$APP=$VERSION" -b "$APP=$BRANCH" "$NAMESPACE"
+    #- set_app_tag_in_namespace.sh "$NAMESPACE" "$APP" "$VERSION"
+  when: manual
+  allow_failure: false
+  environment:
+    name: aws-staging
+  dependencies:
+    - maven-release-build
