@@ -114,9 +114,9 @@ maven-release-build:
     - git checkout ${CI_COMMIT_REF_NAME}
     # Now begin the actual maven release steps...
     - if [ "$RELEASE_VERSION" != "release_version" ];then  
-        mvn -B -Dresume=false -DscmCommentPrefix='[skip ci] ' release:prepare -DreleaseVersion="$RELEASE_VERSION"
+        mvn -B -Dresume=false -DscmCommentPrefix='[skip ci] ' release:prepare -DreleaseVersion="$RELEASE_VERSION";
       else
-        mvn -B -Dresume=false -DscmCommentPrefix='[skip ci] ' release:prepare
+        mvn -B -Dresume=false -DscmCommentPrefix='[skip ci] ' release:prepare;
       fi
     # extract the maven release version and write it out to file (will be used to tag the release docker image)
     - grep "^project.rel.*" release.properties | cut -d "=" -f 2 > "$CI_PROJECT_DIR/${RELEASE_VERSION}"
