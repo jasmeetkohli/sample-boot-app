@@ -22,7 +22,8 @@
         <skipTests>true</skipTests>
     </properties>
     <scm>
-      <developerConnection>scm:svn:http://localhost/repos/myapplication/tags/customer-0.0.1</developerConnection>
+      <developerConnection>scm:svn:https://github.com/jasmeetkohli/sample-boot-app.git/tags/customer-0.0.1</developerConnection>
+      <url>https://github.com/jasmeetkohli/sample-boot-app.git/tags/customer-0.0.1</url>
     </scm>
     <dependencies>
         <dependency>
