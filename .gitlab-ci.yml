@@ -133,8 +133,8 @@ maven-release-build:
     expire_in: 1 week
   when: manual
   allow_failure: false
-  tags:
-    - cache
+  # tags:
+  #   - cache
 
 package-release-docker-image:
   <<: [*master-only, *docker-params]
