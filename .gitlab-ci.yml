@@ -113,7 +113,8 @@ maven-release-build:
     - git clone ${CI_REPOSITORY_URL} ${CI_PROJECT_NAME} && cd ${CI_PROJECT_NAME}
     - git checkout ${CI_COMMIT_REF_NAME}
     # Now begin the actual maven release steps...
-    - if [ "$RELEASE_VERSION" != "release_version" ];then  
+    - if [ "$RELEASE_VERSION" != "release_version" ];then
+        echo "RELEASE_VERSION specified by the user: $RELEASE_VERSION";
         mvn -B -Dresume=false -DscmCommentPrefix='[skip ci] ' release:prepare -DreleaseVersion="$RELEASE_VERSION";
       else
         mvn -B -Dresume=false -DscmCommentPrefix='[skip ci] ' release:prepare;
