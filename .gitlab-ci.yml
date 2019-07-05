@@ -67,21 +67,21 @@ stages:
     - echo "$CI_RUNNER_TAGS" | grep -q k8s && export DOCKER_HOST="tcp://localhost:2375"
     #- docker login -u gitlab-ci-token -p "${CI_BUILD_TOKEN}" "${CI_REGISTRY}"
 
-package-snapshot-docker-image:
-  <<: [*docker-params]
-  stage: snapshot-package
-  dependencies:
-    - maven-snapshot-build
-  script:
-    - SNAPSHOT_VERSION=$(cat $LATEST_VERSION)
-    - echo "SNAPSHOT_VERSION=$SNAPSHOT_VERSION"
-    - export PC_TOMCAT_IMAGE="${CI_REGISTRY}/jasmeetkohlisingh/sample-boot-app:master"
-    #- docker build -t "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}" -t "${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_SLUG}" -t "${CI_REGISTRY_IMAGE}:${SNAPSHOT_VERSION}" . --build-arg PC_TOMCAT_IMAGE=$PC_TOMCAT_IMAGE
-    #- docker push "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
-    #- docker push "${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_SLUG}"
-    #- docker push "${CI_REGISTRY_IMAGE}:${SNAPSHOT_VERSION}"
-  dependencies:
-    - maven-snapshot-build
+# package-snapshot-docker-image:
+#   <<: [*docker-params]
+#   stage: snapshot-package
+#   dependencies:
+#     - maven-snapshot-build
+#   script:
+#     - SNAPSHOT_VERSION=$(cat $LATEST_VERSION)
+#     - echo "SNAPSHOT_VERSION=$SNAPSHOT_VERSION"
+#     - export PC_TOMCAT_IMAGE="${CI_REGISTRY}/jasmeetkohlisingh/sample-boot-app:master"
+#     #- docker build -t "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}" -t "${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_SLUG}" -t "${CI_REGISTRY_IMAGE}:${SNAPSHOT_VERSION}" . --build-arg PC_TOMCAT_IMAGE=$PC_TOMCAT_IMAGE
+#     #- docker push "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
+#     #- docker push "${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_SLUG}"
+#     #- docker push "${CI_REGISTRY_IMAGE}:${SNAPSHOT_VERSION}"
+#   dependencies:
+#     - maven-snapshot-build
 
 
 # mvn-verify:
