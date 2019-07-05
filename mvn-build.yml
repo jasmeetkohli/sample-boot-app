@@ -21,9 +21,9 @@
    - echo "CI_COMMIT_REF_NAME => $CI_COMMIT_REF_NAME"
    - |
      if [ "$CI_COMMIT_REF_NAME" == "master" ] then;
-      mvn -B -Dresume=false -DscmCommentPrefix='[skip ci] ' release:prepare 
+      mvn -B -Dresume=false -DscmCommentPrefix='[skip ci] ' release:prepare;
      else
-      mvn -B -Dresume=false -DscmCommentPrefix='[skip ci] ' release:prepare 
+      mvn -B -Dresume=false -DscmCommentPrefix='[skip ci] ' release:prepare;
      fi
    - grep "^project.rel.*" release.properties | cut -d "=" -f 2 > "$CI_PROJECT_DIR/${RELEASE_VERSION}"
    - git rev-parse HEAD > "$CI_PROJECT_DIR/${RELEASE_SHA}"

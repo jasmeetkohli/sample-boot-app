@@ -39,22 +39,22 @@ stages:
 .master-only: &master-only
   <<: [*common]
 
-maven-snapshot-build:
-  <<: [*common]
-  image: "${MAVEN_IMAGE}"
-  stage: snapshot-build
-  script:
-    - export MAVEN_OPTS="${MAVEN_OPTS} -Dmaven.repo.local=/cache/commerce_m2"
-    - echo "${CI_COMMIT_SHA}" > "${LATEST_VERSION}"
-    - cat $LATEST_VERSION
-    - mvn clean install
-    - "cat target/cov/index.html || :"
-  coverage: /Total.*?([0-9]{1,3})%/
-  artifacts:
-    paths:
-    - target/*.jar
-    - "${LATEST_VERSION}"
-    expire_in: 1 week
+# maven-snapshot-build:
+#   <<: [*common]
+#   image: "${MAVEN_IMAGE}"
+#   stage: snapshot-build
+#   script:
+#     - export MAVEN_OPTS="${MAVEN_OPTS} -Dmaven.repo.local=/cache/commerce_m2"
+#     - echo "${CI_COMMIT_SHA}" > "${LATEST_VERSION}"
+#     - cat $LATEST_VERSION
+#     - mvn clean install
+#     - "cat target/cov/index.html || :"
+#   coverage: /Total.*?([0-9]{1,3})%/
+#   artifacts:
+#     paths:
+#     - target/*.jar
+#     - "${LATEST_VERSION}"
+#     expire_in: 1 week
   #tags:
   #  - cache
 
@@ -84,12 +84,12 @@ package-snapshot-docker-image:
     - maven-snapshot-build
 
 
-mvn-verify:
-  <<: [*common]
-  image: maven:3.5.0-jdk-8
-  stage: functional-test
-  script:
-    - mvn -B verify 
+# mvn-verify:
+#   <<: [*common]
+#   image: maven:3.5.0-jdk-8
+#   stage: functional-test
+#   script:
+#     - mvn -B verify 
 
 
 # release stages
