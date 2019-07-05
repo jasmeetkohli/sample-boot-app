@@ -5,17 +5,17 @@
    #- if grep "SNAPSHOT" resolved.properties; then echo "Cannot release with SNAPSHOT version(s) of dependencies pom" && exit 1; fi
    # invoke maven-release-plugin to perform release - create git tag, bump up the artifact version, upload war to artifactory
    - set -x
-   - git config --global user.name "jasmeetkohlisingh"
-   - git config --global user.email "jasmeetkohlisingh@gmail.com"
+#   - git config --global user.name "jasmeetkohlisingh"
+#   - git config --global user.email "jasmeetkohlisingh@gmail.com"
    # Add ssh key to ssh config to connect to git repo as gitlab
-   - eval $(ssh-agent -s)
-   - ssh-add <(echo "$GITLAB_RSA")
-   - mkdir p ~/.ssh && ssh-keyscan -t rsa gitlab.com > ~/.ssh/known_hosts
-   - cd $(mktemp -d)
+#   - eval $(ssh-agent -s)
+#   - ssh-add <(echo "$GITLAB_RSA")
+#   - mkdir p ~/.ssh && ssh-keyscan -t rsa gitlab.com > ~/.ssh/known_hosts
+#   - cd $(mktemp -d)
    # by default gitlab runner works on detatched head. This prevents commits back to the repo (that are part of release:prepare).
    # therefore, clone and checkout the branch before starting release:prepare
-   - git clone ${CI_REPOSITORY_URL} ${CI_PROJECT_NAME} && cd ${CI_PROJECT_NAME}
-   - git checkout ${CI_COMMIT_REF_NAME}
+#   - git clone ${CI_REPOSITORY_URL} ${CI_PROJECT_NAME} && cd ${CI_PROJECT_NAME}
+#   - git checkout ${CI_COMMIT_REF_NAME}
    # Now begin the actual maven release steps.
    # Check if re-deployed
    - echo "CI_COMMIT_REF_NAME => $CI_COMMIT_REF_NAME"
