@@ -6,6 +6,8 @@ variables:
   EPHEMERAL_NS: "ci-${CI_PIPELINE_ID}"
   CI_CONSUL: "ci-${CI_PIPELINE_ID}-consul-consul.ci-${CI_PIPELINE_ID}"
 
+include: mvn-build.yml
+
 stages:
   - snapshot-build
   - snapshot-package
@@ -95,37 +97,7 @@ maven-release-build:
   <<: [*master-only]
   image: "${MAVEN_IMAGE}"
   stage: release-build
-  script:
-    # check if project is using a SNAPSHOT version of commerce-dependencies pom
-    #- mvn properties:write-project-properties
-    #- DEPENDENCIES_POM_VERSION=$(grep "dependencies.commerce.version" resolved.properties | cut -d"=" -f 2)
-    #- (if echo "$DEPENDENCIES_POM_VERSION" |grep "SNAPSHOT"; then echo "Cannot release with SNAPSHOT version of dependencies pom" && exit 1; fi)
-    # invoke maven-release-plugin to perform release - create git tag, bump up the artifact version, upload war to artifactory
-    #- git config --global user.name "GitLab Runner"
-    #- git config --global user.email "gitlab@gitlab.tuk2.intelius.com"
-    # Add ssh key to ssh config to connect to git repo as gitlab
-    #- eval $(ssh-agent -s)
-    #- ssh-add <(echo "$GITLAB_RSA")
-    #- mkdir p ~/.ssh && ssh-keyscan -t rsa gitlab.tuk2.intelius.com > ~/.ssh/known_hosts
-    #- cd $(mktemp -d)
-    # by default gitlab runner works on detatched head. This prevents commits back to the repo (that are part of release:prepare).
-    # therefore, clone and checkout the branch before starting release:prepare
-    - git clone ${CI_REPOSITORY_URL} ${CI_PROJECT_NAME} && cd ${CI_PROJECT_NAME}
-    - git checkout ${CI_COMMIT_REF_NAME}
-    # Now begin the actual maven release steps...
-    - if [ "$RELEASE_VERSION" != "release_version" ];then
-        echo "RELEASE_VERSION specified by the user --->> $RELEASE_VERSION";
-        mvn -B -Dresume=false -DscmCommentPrefix='[skip ci] ' release:prepare -DreleaseVersion="$RELEASE_VERSION";
-      else
-        mvn -B -Dresume=false -DscmCommentPrefix='[skip ci] ' release:prepare;
-      fi
-    # extract the maven release version and write it out to file (will be used to tag the release docker image)
-    - grep "^project.rel.*" release.properties | cut -d "=" -f 2 > "$CI_PROJECT_DIR/${RELEASE_VERSION}"
-    - mvn release:perform -Dmaven.site.skip=true
-    # extract the most recent commit sha and write it out to file (will be used to tag the release docker image)
-    - git rev-parse HEAD > "$CI_PROJECT_DIR/${RELEASE_SHA}"
-    # make the release war available as an artifact for dependendent downstream stages
-    #- rm -f $CI_PROJECT_DIR/target/*.war; cp target/checkout/target/*.war $CI_PROJECT_DIR/target
+  extends: .mvn-build
   artifacts:
     paths:
     - target/*.jar
@@ -134,8 +106,6 @@ maven-release-build:
     expire_in: 1 week
   when: manual
   allow_failure: false
-  # tags:
-  #   - cache
 
 package-release-docker-image:
   <<: [*master-only, *docker-params]
