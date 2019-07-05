@@ -1,9 +1,10 @@
 
 .maven-release-build:
    script:
-   - mvn properties:write-project-properties
-   - if grep "SNAPSHOT" resolved.properties; then echo "Cannot release with SNAPSHOT version(s) of dependencies pom" && exit 1; fi
+   #- mvn properties:write-project-properties
+   #- if grep "SNAPSHOT" resolved.properties; then echo "Cannot release with SNAPSHOT version(s) of dependencies pom" && exit 1; fi
    # invoke maven-release-plugin to perform release - create git tag, bump up the artifact version, upload war to artifactory
+   - set -x
    - git config --global user.name "jasmeetkohlisingh"
    - git config --global user.email "jasmeetkohlisingh@gmail.com"
    # Add ssh key to ssh config to connect to git repo as gitlab
