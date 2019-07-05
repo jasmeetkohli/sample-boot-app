@@ -97,7 +97,7 @@ maven-release-build:
   <<: [*master-only]
   image: "${MAVEN_IMAGE}"
   stage: release-build
-  extends: .mvn-build
+  extends: .maven-release-build
   artifacts:
     paths:
     - target/*.jar
