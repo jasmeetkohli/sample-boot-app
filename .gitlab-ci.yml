@@ -94,7 +94,7 @@ stages:
 
 # release stages
 maven-release-build:
-  <<: [*master-only]
+  # <<: [*master-only]
   image: "${MAVEN_IMAGE}"
   stage: release-build
   extends: .maven-release-build
