@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.redhat.developer.demos</groupId>
     <artifactId>customer</artifactId>
-    <version>2.2-SNAPSHOT</version>
+    <version>3.6-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>customer</name>
     <description>Demo project for Spring Boot</description>
@@ -62,7 +62,42 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-    <build>
+    <repositories>
+        <repository>
+            <id>releases</id>
+            <name>Jasmeet Releases Repository</name>
+            <url>http://localhost:8081/maven-releases</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <releases>
+                <updatePolicy>never</updatePolicy>
+            </releases>
+        </repository>
+ <!--        <repository>
+            <id>snapshots</id>
+            <name>Jasmeet Snapshots Repository</name>
+            <url>http://localhost:8081/maven-snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <updatePolicy>always</updatePolicy>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>thirdparty</id>
+            <name>jasmeetkohli Thirdparty Repository</name>
+            <url>http://localhost:8081/maven-thirdparty</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <releases>
+                <updatePolicy>never</updatePolicy>
+            </releases>
+        </repository> -->
+    </repositories>
+<!--     <build>
         <finalName>${project.artifactId}</finalName>
         <plugins>
             <plugin>
@@ -70,5 +105,5 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
         </plugins>
-    </build>
+    </build> -->
 </project>
